@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oda Bultum University - Letter & Approval System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #printableLetter, #printableLetter * { visibility: visible; }
+            #printableLetter { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 min-h-screen flex flex-col">
+
+    <!-- Header Navigation Bar -->
+    <header class="bg-emerald-900 text-white shadow-lg border-b-4 border-yellow-500 no-print">
+        <div class="container mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            <!-- University Emblem and Title -->
+            <div class="flex items-center space-x-3">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Oda_Bultum_University_logo.jpg/220px-Oda_Bultum_University_logo.jpg" 
+                     alt="Oda Bultum University Logo" 
+                     class="h-16 w-16 rounded-full bg-white p-1 border-2 border-yellow-400 shadow-md object-contain"
+                     onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=OBU+Logo';">
+                <div>
+                    <h1 class="text-xl md:text-2xl font-extrabold tracking-wide uppercase">Oda Bultum University</h1>
+                    <p class="text-xs md:text-sm text-yellow-300 font-semibold italic">Yunivarsiitii Odaa Bultum • Knowledge for Community Transformation</p>
+                </div>
+            </div>
+
+            <!-- Role Selector & Current User -->
+            <div class="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-2 md:mt-0">
+                <div class="text-right">
+                    <span id="activeUserLabel" class="block text-xs text-emerald-200 font-bold uppercase">Active Role View</span>
+                    <span id="currentUserRoleBadge" class="bg-yellow-500 text-emerald-950 px-3 py-1 rounded-full text-xs font-black shadow">Requester / Faculty</span>
+                </div>
+                <button onclick="switchRoleModal()" class="bg-emerald-700 hover:bg-emerald-600 border border-emerald-400 text-white text-xs font-bold px-3 py-1.5 rounded transition shadow">
+                    🔄 Switch Persona
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container mx-auto px-4 py-6 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 no-print">
+        
+        <!-- Left Side Bar: Request Creation & Quick Actions (5 Cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Letter Drafting Form Card -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <div class="bg-emerald-800 text-white px-5 py-3 font-bold flex justify-between items-center">
+                    <span>📝 Submit New Official Request</span>
+                    <span class="text-xs bg-emerald-900 px-2 py-1 rounded text-yellow-300">Form No: OBU-OAR-01</span>
+                </div>
+                
+                <form id="letterForm" onsubmit="submitLetter(event)" class="p-5 space-y-4">
+                    <!-- Requester Category / Track -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Requester Track / Category <span class="text-red-500">*</span></label>
+                        <select id="userTrack" onchange="updateCategoryFields()" class="w-full border border-gray-300 rounded-lg p-2 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="academician">Academician / Faculty Staff</option>
+                            <option value="student">Student Track</option>
+                            <option value="admin_staff">Administrative Staff</option>
+                            <option value="stakeholder">External Stakeholder / Partner</option>
+                            <option value="resource_req">Material & Resource Requisition / Transfer</option>
+                        </select>
+                    </div>
+
+                    <!-- Requester Full Name & Staff/Student ID -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Full Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="requesterName" required class="w-full border border-gray-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="e.g. Mr. Teklu Nega">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ID / Registration No.</label>
+                            <input type="text" id="requesterID" class="w-full border border-gray-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="e.g. OBU/1024/15">
+                        </div>
+                    </div>
+
+                    <!-- College & Department Selectors -->
+                    <div class="grid grid-cols-1 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">College / Institute / Directorate <span class="text-red-500">*</span></label>
+                            <select id="collegeSelect" onchange="populateDepartments()" class="w-full border border-gray-300 rounded-lg p-2 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="">-- Select College / Unit --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Department / Program / Office <span class="text-red-500">*</span></label>
+                            <select id="departmentSelect" class="w-full border border-gray-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="">-- Select Department --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Letter Type & Target VP -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Letter Type <span class="text-red-500">*</span></label>
+                            <select id="letterType" class="w-full border border-gray-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="Sick Leave">Sick Leave Request</option>
+                                <option value="Annual / Study Leave">Annual / Study Leave</option>
+                                <option value="Release Letter">Release Letter</option>
+                                <option value="Salary Release">Salary Release</option>
+                                <option value="Clearance">Clearance Certificate</option>
+                                <option value="Material Requisition">Material / Asset Withdrawal</option>
+                                <option value="Property Transfer">Property Transfer Request</option>
+                                <option value="General Petition">General Request / Petition</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Target Endorsement VP <span class="text-red-500">*</span></label>
+                            <select id="targetVP" class="w-full border border-gray-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="Academic Vice President">Academic Vice President (AVP)</option>
+                                <option value="Administration Vice President">Administration Vice President (VPAD)</option>
+                                <option value="Research & Tech Transfer VP">Research & Tech Transfer VP</option>
+                                <option value="University President">University President</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Material Specific Fields (Hidden by default) -->
+                    <div id="materialFields" class="hidden p-3 bg-yellow-50 border border-yellow-200 rounded-lg space-y-2">
+                        <label class="block text-xs font-bold text-yellow-900 uppercase">Material / Asset Details</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="assetName" placeholder="Item Name / Model" class="w-full border p-1.5 text-xs rounded bg-white">
+                            <input type="text" id="assetTag" placeholder="Property Tag / Serial No." class="w-full border p-1.5 text-xs rounded bg-white">
+                        </div>
+                        <select id="resourceAction" class="w-full border p-1.5 text-xs rounded bg-white">
+                            <option value="Withdrawal from Store">Withdrawal from Central Store</option>
+                            <option value="Inter-Department Transfer">Inter-Department Transfer</option>
+                            <option value="Return / Submission">Return / Disposal Submission</option>
+                        </select>
+                    </div>
+
+                    <!-- Content & Justification -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Letter Body / Justification <span class="text-red-500">*</span></label>
+                        <textarea id="letterBody" rows="4" required class="w-full border border-gray-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Provide complete justification and context..."></textarea>
+                    </div>
+
+                    <!-- Evidence / Supporting Document Upload -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Attach Supporting Evidence (Optional)</label>
+                        <input type="file" id="evidenceFile" class="w-full border border-gray-300 rounded-lg p-1.5 text-xs bg-gray-50 focus:outline-none">
+                        <p class="text-[10px] text-gray-500 mt-0.5">Attach medical certificates, store receipts, or official notices (PDF, JPG, PNG).</p>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full bg-emerald-800 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm transition shadow flex justify-center items-center space-x-2">
+                        <span>🚀</span>
+                        <span>Submit Request into Approval Pipeline</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Developer Accreditation Box -->
+            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-center">
+                <div class="flex items-center justify-center space-x-2 text-xs text-gray-600 font-semibold">
+                    <span>💻 System Developer & Technical Lead:</span>
+                </div>
+                <p class="text-sm font-extrabold text-emerald-900 mt-1">Mr. Teklu N.</p>
+                <p class="text-xs text-gray-500 font-medium">MSc in Applied Statistics • Online Portal Systems Architect</p>
+            </div>
+
+        </div>
+
+        <!-- Right Side Bar: Approvals Queue, Sender Status, & Management Console (7 Cols) -->
+        <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Navigation Tabs -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-2 flex space-x-2 overflow-x-auto">
+                <button onclick="setTab('queue')" id="tabQueue" class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-800 text-white shadow">
+                    📥 Approval Queue & Actions
+                </button>
+                <button onclick="setTab('tracker')" id="tabTracker" class="px-4 py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    🔍 Sender Letter Status & Pickup
+                </button>
+                <button onclick="setTab('admin')" id="tabAdmin" class="px-4 py-2 rounded-lg text-xs font-bold bg-yellow-100 text-yellow-900 hover:bg-yellow-200">
+                    ⚙️ Admin & Governance Console
+                </button>
+            </div>
+
+            <!-- TAB 1: APPROVAL QUEUE -->
+            <div id="panelQueue" class="space-y-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-sm font-extrabold text-emerald-900 uppercase">Pending Review Queue</h2>
+                        <p class="text-xs text-gray-500">Filtered by your currently selected active persona.</p>
+                    </div>
+                    <span id="queueCounter" class="bg-emerald-100 text-emerald-800 text-xs font-black px-2.5 py-1 rounded-full">0 Requests</span>
+                </div>
+
+                <div id="lettersContainer" class="space-y-4">
+                    <!-- Dynamic Cards Rendered Here -->
+                </div>
+            </div>
+
+            <!-- TAB 2: SENDER STATUS & PICKUP -->
+            <div id="panelTracker" class="hidden space-y-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <h2 class="text-sm font-extrabold text-emerald-900 uppercase">Sender Letter Status & Official Pickup</h2>
+                    <p class="text-xs text-gray-500">Search or track letters submitted by you or your department.</p>
+                </div>
+
+                <div id="trackerContainer" class="space-y-4">
+                    <!-- Dynamic Tracker Cards Rendered Here -->
+                </div>
+            </div>
+
+            <!-- TAB 3: ADMIN & GOVERNANCE CONSOLE -->
+            <div id="panelAdmin" class="hidden space-y-4">
+                <div class="bg-yellow-50 border border-yellow-300 p-4 rounded-xl">
+                    <div class="flex items-start space-x-3">
+                        <span class="text-2xl">🛡️</span>
+                        <div>
+                            <h2 class="text-sm font-extrabold text-yellow-950 uppercase">University Official Assignment & Access Control</h2>
+                            <p class="text-xs text-yellow-800 mt-0.5">
+                                Restricted to: <strong>University President</strong>, <strong>Mr. Teklu Nega (Lead Web Developer)</strong>, and <strong>IT Support Technicians</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assigned Officials Registry Table -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                        <h3 class="text-xs font-extrabold text-gray-800 uppercase">Assigned Approving Authorities</h3>
+                        <button onclick="openAssignModal()" class="bg-emerald-800 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-emerald-700">
+                            + Assign Official to Role
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-gray-100 border-b text-gray-700 uppercase font-bold">
+                                    <th class="p-3">Official Name</th>
+                                    <th class="p-3">Role / Rank</th>
+                                    <th class="p-3">Assigned Unit / Department</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminOfficialsTable" class="divide-y divide-gray-200">
+                                <!-- Dynamic Officials List -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal for Assigning Officials (Admin) -->
+    <div id="assignModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex justify-center items-center z-50 p-4">
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-gray-200">
+            <div class="bg-emerald-900 text-white px-5 py-3 font-bold flex justify-between items-center">
+                <span>Assign Official Approver Authority</span>
+                <button onclick="closeAssignModal()" class="text-gray-300 hover:text-white font-bold text-lg">&times;</button>
+            </div>
+            <form onsubmit="saveOfficialAssignment(event)" class="p-5 space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Official Name & Rank</label>
+                    <input type="text" id="adminOfficialName" required class="w-full border p-2 text-xs rounded" placeholder="e.g. Dr. Mohammed Hussein (Dean)">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Target Authority Role</label>
+                    <select id="adminRoleSelect" class="w-full border p-2 text-xs rounded">
+                        <option value="Department Head">Department Head</option>
+                        <option value="College Dean">College Dean</option>
+                        <option value="Academic Vice President">Academic Vice President</option>
+                        <option value="Administration Vice President">Administration Vice President</option>
+                        <option value="Research & Tech Transfer VP">Research & Tech Transfer VP</option>
+                        <option value="Registrar">University Registrar</option>
+                        <option value="Student Dean">Dean of Students</option>
+                        <option value="Directorate Head">Directorate / General Service Head</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Assign to College / Unit</label>
+                    <select id="adminCollegeSelect" onchange="populateAdminDepartments()" class="w-full border p-2 text-xs rounded">
+                        <option value="">-- Select College / Unit --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Assign to Specific Department</label>
+                    <select id="adminDeptSelect" class="w-full border p-2 text-xs rounded">
+                        <option value="ALL">ALL DEPARTMENTS IN COLLEGE / UNIT</option>
+                    </select>
+                </div>
+                <div class="pt-3 flex space-x-2 justify-end">
+                    <button type="button" onclick="closeAssignModal()" class="px-4 py-2 border rounded text-xs font-bold text-gray-600">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-800 text-white rounded text-xs font-bold hover:bg-emerald-700">Save & Authorize</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Persona / Role Switcher -->
+    <div id="roleModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex justify-center items-center z-50 p-4">
+        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden border border-gray-200">
+            <div class="bg-emerald-900 text-white px-5 py-3 font-bold flex justify-between items-center">
+                <span>Select User Persona View</span>
+                <button onclick="closeRoleModal()" class="text-gray-300 hover:text-white font-bold text-lg">&times;</button>
+            </div>
+            <div class="p-5 space-y-2 max-h-[70vh] overflow-y-auto" id="personaOptionsContainer">
+                <!-- Dynamic Persona Buttons -->
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINTABLE LETTER VIEW (Triggered on Demand) -->
+    <div id="printableLetter" class="hidden p-8 bg-white max-w-4xl mx-auto border text-gray-900">
+        <!-- Letterhead Header -->
+        <div class="flex items-center justify-between border-b-4 border-emerald-900 pb-4 mb-6">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Oda_Bultum_University_logo.jpg/220px-Oda_Bultum_University_logo.jpg" 
+                 class="h-24 w-24 object-contain" alt="OBU Seal">
+            <div class="text-center flex-grow px-4">
+                <h1 class="text-2xl font-black uppercase tracking-wider text-emerald-950">ODA BULTUM UNIVERSITY</h1>
+                <h2 class="text-base font-bold text-emerald-900">YUNIVARSIITII ODAA BULTUM</h2>
+                <p class="text-xs text-gray-600 font-semibold mt-1">OFFICE OF ACADEMIC & ADMINISTRATIVE AFFAIRS</p>
+                <p class="text-[10px] text-gray-500">P.O. Box 226, Chiro, Oromia, Ethiopia • Web: www.obu.edu.et</p>
+            </div>
+            <div class="text-right text-xs font-mono space-y-1">
+                <p><strong>Ref No:</strong> <span id="printRefNo">OBU/OAR/2026/882</span></p>
+                <p><strong>Date:</strong> <span id="printDate">14 Oct 2026</span></p>
+            </div>
+        </div>
+
+        <!-- Printable Document Content -->
+        <div id="printBody" class="space-y-4 text-sm leading-relaxed min-h-[400px]">
+            <!-- Dynamic Content -->
+        </div>
+
+        <!-- Official Stamps & Signatures Footer -->
+        <div class="mt-12 pt-6 border-t grid grid-cols-3 gap-4 text-center text-xs">
+            <div id="printDeptSignature" class="space-y-2 border-r pr-2">
+                <p class="font-bold uppercase text-gray-500">Department Head Seal</p>
+                <div class="h-16 flex items-center justify-center italic text-gray-400">[Official Seal]</div>
+                <p id="printDeptHeadName" class="font-semibold text-gray-800">Pending</p>
+            </div>
+            <div id="printDeanSignature" class="space-y-2 border-r pr-2">
+                <p class="font-bold uppercase text-gray-500">College Dean Seal</p>
+                <div class="h-16 flex items-center justify-center italic text-gray-400">[Official Seal]</div>
+                <p id="printDeanName" class="font-semibold text-gray-800">Pending</p>
+            </div>
+            <div id="printVPSignature" class="space-y-2">
+                <p class="font-bold uppercase text-gray-500">Vice President Endorsement</p>
+                <div class="h-16 flex items-center justify-center italic text-gray-400">[Official Seal]</div>
+                <p id="printVPName" class="font-semibold text-gray-800">Pending</p>
+            </div>
+        </div>
+
+        <!-- Footer Notice -->
+        <div class="mt-8 pt-4 border-t text-center text-[10px] text-gray-400 flex justify-between items-center">
+            <span>Verified via Oda Bultum University Digital Portal System</span>
+            <span>Developer: Mr. Teklu Nega (MSc)</span>
+        </div>
+    </div>
+
+    <!-- Application Footer -->
+    <footer class="bg-emerald-950 text-white text-xs py-4 border-t border-emerald-800 mt-auto no-print">
+        <div class="container mx-auto px-4 text-center space-y-1">
+            <p class="font-bold text-yellow-400">Oda Bultum University Official Approval & Letter Portal</p>
+            <p class="text-emerald-300">
+                Online Website Developer: <strong>Mr. Teklu Nega (MSc in Applied Statistics)</strong> • All Rights Reserved © 2026
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Data & Logic -->
+    <script>
+        // --- 1. COLLEGE & DEPARTMENT DATA STRUCTURE ---
+        const universityStructure = {
+            "College of Social Science and Humanities": [
+                "Afaan Oromoo and Literature", "Civics and Ethical Studies", "Educational Planning and Management",
+                "English Language and Literature", "Geography & Environmental Studies", "History and Heritage Management",
+                "Oromo Folklore and Literature", "Psychology", "Sociology", "Post Graduate Diploma Training (PGDT)"
+            ],
+            "College of Natural and Computational Science": [
+                "Biology", "Chemistry", "Computer Science", "Geology", "Mathematics", "Physics", "Sport Science", "Statistics"
+            ],
+            "College of Agriculture": [
+                "Agribusiness and Value Chain Management", "Agricultural Economics", "Animal Science",
+                "Food Science and Post-Harvest Technology", "Horticulture", "Plant Science", "Rural Development and Agricultural Extension"
+            ],
+            "College of Natural Resource and Environmental Science": [
+                "Biodiversity and Ecotourism Management", "Environmental Science", "Forestry",
+                "Natural Resource Management", "Soil Resource and Watershed Management"
+            ],
+            "Institute of Technology": [
+                "Civil Engineering", "Electrical and Computer Engineering", "Food Engineering",
+                "Hydraulics and Water Resource Engineering", "Mechanical Engineering", "Surveying Engineering",
+                "Water Resource and Irrigation Engineering", "Water Supply and Environmental Engineering"
+            ],
+            "Institution of Land Administration": [
+                "Geographic Information Science (GIS)", "Land Administration and Surveying", "Property Valuation"
+            ],
+            "College of Business and Economics": [
+                "Accounting and Finance", "Economics", "Management", "Marketing Management"
+            ],
+            "College of Health and Medicine": [
+                "Nursing", "Midwifery", "Medical Laboratory", "Anaesthesia"
+            ],
+            "Administrative Directorates & Student Units": [
+                "Human Resource Directorate", "Finance & Property Administration", "Registrar & Alumni Affairs",
+                "Dean of Students Office", "Student Union", "Research & Technology Transfer Directorate"
+            ]
+        };
+
+        // --- 2. ASSIGNED OFFICIALS REGISTRY (ROLE-BASED ACCESS CONTROL) ---
+        let assignedOfficials = JSON.parse(localStorage.getItem('obu_assigned_officials')) || [
+            { id: 1, name: "Dr. Mohammed Kassa", role: "Department Head", college: "College of Natural and Computational Science", department: "Statistics", active: true },
+            { id: 2, name: "Dr. Chala Gemechu", role: "College Dean", college: "College of Natural and Computational Science", department: "ALL", active: true },
+            { id: 3, name: "Prof. Bekele Gutema", role: "Academic Vice President", college: "Administrative Directorates & Student Units", department: "ALL", active: true },
+            { id: 4, name: "Mr. Teklu Nega (MSc)", role: "System Administrator / Developer", college: "Administrative Directorates & Student Units", department: "ALL", active: true }
+        ];
+
+        // --- 3. LETTERS DATABASE ---
+        let letters = JSON.parse(localStorage.getItem('obu_letters_db')) || [
+            {
+                id: 101,
+                refNo: "OBU/OAR/2026/101",
+                track: "academician",
+                requesterName: "Mr.Teklu Nega",
+                requesterID: "OBU/502/12",
+                college: "College of Natural and Computational Science",
+                department: "Statistics",
+                type: "Annual / Study Leave",
+                targetVP: "Academic Vice President",
+                body: "Requesting approval for 30-day study leave to complete collaborative research at Addis Ababa University.",
+                status: "PENDING_DEPT_HEAD",
+                currentOffice: "Department Head (Statistics)",
+                evidenceAttached: false,
+                materialDetails: null,
+                dispatchedTo: null,
+                date: "2026-10-14",
+                history: [
+                    { time: "2026-10-14 09:30", note: "Submitted by Dr. Abebe Tadesse into system pipeline." }
+                ],
+                signatures: {
+                    deptHead: null,
+                    dean: null,
+                    vp: null
+                }
+            }
+        ];
+
+        // --- 4. CURRENT ACTIVE USER PERSONA ---
+        let currentUser = {
+            role: "Requester / Faculty",
+            officialName: "Dr. Abebe Tadesse",
+            assignedCollege: "College of Natural and Computational Science",
+            assignedDept: "Statistics"
+        };
+
+        // --- 5. INITIALIZATION FUNCTIONS ---
+        window.onload = function() {
+            populateColleges();
+            renderLettersQueue();
+            renderTracker();
+            renderAdminTable();
+        };
+
+        function populateColleges() {
+            const colSelect = document.getElementById('collegeSelect');
+            const adminColSelect = document.getElementById('adminCollegeSelect');
+            colSelect.innerHTML = '<option value="">-- Select College / Unit --</option>';
+            adminColSelect.innerHTML = '<option value="">-- Select College / Unit --</option>';
+
+            Object.keys(universityStructure).forEach(college => {
+                colSelect.innerHTML += `<option value="${college}">${college}</option>`;
+                adminColSelect.innerHTML += `<option value="${college}">${college}</option>`;
+            });
+        }
+
+        function populateDepartments() {
+            const selectedCol = document.getElementById('collegeSelect').value;
+            const deptSelect = document.getElementById('departmentSelect');
+            deptSelect.innerHTML = '<option value="">-- Select Department --</option>';
+
+            if (selectedCol && universityStructure[selectedCol]) {
+                universityStructure[selectedCol].forEach(dept => {
+                    deptSelect.innerHTML += `<option value="${dept}">${dept}</option>`;
+                });
+            }
+        }
+
+        function populateAdminDepartments() {
+            const selectedCol = document.getElementById('adminCollegeSelect').value;
+            const adminDeptSelect = document.getElementById('adminDeptSelect');
+            adminDeptSelect.innerHTML = '<option value="ALL">ALL DEPARTMENTS IN COLLEGE / UNIT</option>';
+
+            if (selectedCol && universityStructure[selectedCol]) {
+                universityStructure[selectedCol].forEach(dept => {
+                    adminDeptSelect.innerHTML += `<option value="${dept}">${dept}</option>`;
+                });
+            }
+        }
+
+        function updateCategoryFields() {
+            const track = document.getElementById('userTrack').value;
+            const matFields = document.getElementById('materialFields');
+            if (track === 'resource_req') {
+                matFields.classList.remove('hidden');
+            } else {
+                matFields.classList.add('hidden');
+            }
+        }
+
+        // --- 6. SUBMIT LETTER LOGIC ---
+        function submitLetter(e) {
+            e.preventDefault();
+            const track = document.getElementById('userTrack').value;
+            const name = document.getElementById('requesterName').value;
+            const reqID = document.getElementById('requesterID').value;
+            const college = document.getElementById('collegeSelect').value;
+            const dept = document.getElementById('departmentSelect').value;
+            const type = document.getElementById('letterType').value;
+            const targetVP = document.getElementById('targetVP').value;
+            const body = document.getElementById('letterBody').value;
+            const fileInput = document.getElementById('evidenceFile');
+
+            if (!college || !dept) {
+                alert("Please select both College and Department.");
+                return;
+            }
+
+            let initialStatus = "PENDING_DEPT_HEAD";
+            let initialOffice = `Department Head (${dept})`;
+
+            if (track === "student") {
+                initialStatus = "PENDING_STUDENT_UNION";
+                initialOffice = "Student Union / Department Review";
+            } else if (track === "stakeholder") {
+                initialStatus = "PENDING_DEAN";
+                initialOffice = `College Dean (${college})`;
+            }
+
+            const newLetter = {
+                id: Date.now(),
+                refNo: `OBU/OAR/2026/${Math.floor(100 + Math.random() * 900)}`,
+                track: track,
+                requesterName: name,
+                requesterID: reqID || 'N/A',
+                college: college,
+                department: dept,
+                type: type,
+                targetVP: targetVP,
+                body: body,
+                status: initialStatus,
+                currentOffice: initialOffice,
+                evidenceAttached: fileInput.files.length > 0 ? fileInput.files[0].name : false,
+                materialDetails: track === 'resource_req' ? {
+                    item: document.getElementById('assetName').value,
+                    tag: document.getElementById('assetTag').value,
+                    action: document.getElementById('resourceAction').value
+                } : null,
+                dispatchedTo: null,
+                date: new Date().toISOString().split('T')[0],
+                history: [
+                    { time: new Date().toLocaleString(), note: `Submitted by ${name} into ${initialOffice}` }
+                ],
+                signatures: { deptHead: null, dean: null, vp: null }
+            };
+
+            letters.push(newLetter);
+            saveStorage();
+            document.getElementById('letterForm').reset();
+            alert(`Letter ${newLetter.refNo} submitted successfully! Forwarded to: ${initialOffice}`);
+            renderLettersQueue();
+            renderTracker();
+        }
+
+        // --- 7. RENDER APPROVAL QUEUE ---
+        function renderLettersQueue() {
+            const container = document.getElementById('lettersContainer');
+            container.innerHTML = '';
+
+            let count = 0;
+
+            letters.forEach(letter => {
+                // Check if current active user role can approve this letter
+                const assignedOfficial = assignedOfficials.find(o => 
+                    o.active && 
+                    o.role === currentUser.role && 
+                    (o.college === letter.college || o.college === "Administrative Directorates & Student Units")
+                );
+
+                const isTargetOffice = 
+                    (currentUser.role === "Department Head" && letter.status === "PENDING_DEPT_HEAD") ||
+                    (currentUser.role === "College Dean" && letter.status === "PENDING_DEAN") ||
+                    (currentUser.role.includes("Vice President") && letter.status === "PENDING_VP") ||
+                    (currentUser.role === "System Administrator / Developer");
+
+                if (isTargetOffice) count++;
+
+                let card = document.createElement('div');
+                card.className = "bg-white border rounded-xl p-5 shadow-sm space-y-3 relative";
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start border-b pb-3">
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded">Ref: ${letter.refNo}</span>
+                            <h3 class="text-sm font-extrabold text-gray-900 mt-1">${letter.requesterName} <span class="text-xs font-normal text-gray-500">(${letter.requesterID})</span></h3>
+                            <p class="text-xs text-gray-600">${letter.college} • <strong>${letter.department}</strong></p>
+                        </div>
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-full ${getStatusBadgeClass(letter.status)}">
+                            ${letter.status.replace(/_/g, ' ')}
+                        </span>
+                    </div>
+
+                    <div class="text-xs bg-gray-50 p-3 rounded border text-gray-800">
+                        <p class="font-bold text-gray-500 uppercase text-[10px] mb-1">Letter Type: ${letter.type}</p>
+                        "${letter.body}"
+                    </div>
+
+                    ${letter.evidenceAttached ? `
+                        <div class="text-xs bg-blue-50 border border-blue-200 p-2 rounded text-blue-900 flex items-center justify-between">
+                            <span>📎 Evidence Attached: <strong>${letter.evidenceAttached}</strong></span>
+                            <span class="text-[10px] bg-blue-200 px-2 py-0.5 rounded font-bold">Verified File</span>
+                        </div>
+                    ` : ''}
+
+                    ${letter.materialDetails ? `
+                        <div class="text-xs bg-yellow-50 border border-yellow-200 p-2 rounded text-yellow-900">
+                            <strong>📦 Asset Request:</strong> ${letter.materialDetails.item} (Tag: ${letter.materialDetails.tag}) - <em>${letter.materialDetails.action}</em>
+                        </div>
+                    ` : ''}
+
+                    <div class="text-[11px] text-gray-500">
+                        <strong>Current Office Location:</strong> ${letter.currentOffice}
+                    </div>
+
+                    <!-- Approval Action Console -->
+                    ${isTargetOffice ? `
+                        ${!assignedOfficial ? `
+                            <div class="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-xs">
+                                ⚠️ <strong>Approval Blocked:</strong> No assigned official found for <em>${currentUser.role}</em> in this College/Department. The University President or IT Admin must assign an authorized user first.
+                            </div>
+                        ` : `
+                            <div class="bg-gray-100 p-3 rounded-lg border space-y-2 pt-2">
+                                <label class="block text-xs font-bold text-gray-700">Action Console (Log Official Endorsement & Comments)</label>
+                                <input type="text" id="remark_${letter.id}" placeholder="Enter official remarks..." class="w-full border p-1.5 text-xs rounded">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-500">Upload Official Stamp/Seal (Optional)</label>
+                                        <input type="file" id="stamp_${letter.id}" class="w-full text-[10px]">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-500">Upload E-Signature (Optional)</label>
+                                        <input type="file" id="sig_${letter.id}" class="w-full text-[10px]">
+                                    </div>
+                                </div>
+                                ${letter.status === 'PENDING_VP' ? `
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-emerald-900">Forward Endorsed Letter to Concerned Dispatch Body:</label>
+                                        <select id="dispatch_${letter.id}" class="w-full border p-1 text-xs rounded bg-white">
+                                            <option value="Human Resource Directorate">Human Resource Directorate</option>
+                                            <option value="Finance & Property Administration">Finance & Property Administration</option>
+                                            <option value="Registrar & Alumni Office">Registrar & Alumni Office</option>
+                                            <option value="General Service & Store Directorate">General Service & Store Directorate</option>
+                                        </select>
+                                    </div>
+                                ` : ''}
+                                <div class="flex space-x-2 pt-1">
+                                    <button onclick="processApproval(${letter.id}, 'APPROVE')" class="bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-1.5 rounded flex-1">
+                                        ✔ Approve & Forward
+                                    </button>
+                                    <button onclick="processApproval(${letter.id}, 'REJECT')" class="bg-red-700 hover:bg-red-600 text-white font-bold text-xs px-3 py-1.5 rounded">
+                                        ✖ Reject
+                                    </button>
+                                </div>
+                            </div>
+                        `}
+                    ` : ''}
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('queueCounter').innerText = `${count} Actionable`;
+        }
+
+        // --- 8. PROCESS APPROVAL WORKFLOW ---
+        function processApproval(id, action) {
+            let letter = letters.find(l => l.id === id);
+            if (!letter) return;
+
+            const remark = document.getElementById(`remark_${id}`).value;
+            const timeStr = new Date().toLocaleString();
+
+            if (action === 'REJECT') {
+                letter.status = "REJECTED";
+                letter.currentOffice = "Terminated";
+                letter.history.push({ time: timeStr, note: `Rejected by ${currentUser.role} (${currentUser.officialName}). Reason: ${remark}` });
+            } else {
+                if (letter.status === 'PENDING_DEPT_HEAD' || letter.status === 'PENDING_STUDENT_UNION') {
+                    letter.status = "PENDING_DEAN";
+                    letter.currentOffice = `College Dean (${letter.college})`;
+                    letter.signatures.deptHead = currentUser.officialName;
+                    letter.history.push({ time: timeStr, note: `Approved by Dept Head (${currentUser.officialName}). ${remark}` });
+                } else if (letter.status === 'PENDING_DEAN') {
+                    letter.status = "PENDING_VP";
+                    letter.currentOffice = letter.targetVP;
+                    letter.signatures.dean = currentUser.officialName;
+                    letter.history.push({ time: timeStr, note: `Approved by College Dean (${currentUser.officialName}). ${remark}` });
+                } else if (letter.status === 'PENDING_VP') {
+                    const dispatchBody = document.getElementById(`dispatch_${id}`).value;
+                    letter.status = "DISPATCHED_READY";
+                    letter.dispatchedTo = dispatchBody;
+                    letter.currentOffice = `Dispatched to ${dispatchBody} (Ready for Pickup)`;
+                    letter.signatures.vp = currentUser.officialName;
+                    letter.history.push({ time: timeStr, note: `Final Endorsement by ${letter.targetVP} (${currentUser.officialName}). Dispatched to ${dispatchBody}.` });
+                }
+            }
+
+            saveStorage();
+            renderLettersQueue();
+            renderTracker();
+            alert(`Decision saved for Letter Ref: ${letter.refNo}`);
+        }
+
+        // --- 9. RENDER SENDER TRACKER & PRINTABLE PICKUP ---
+        function renderTracker() {
+            const container = document.getElementById('trackerContainer');
+            container.innerHTML = '';
+
+            letters.forEach(letter => {
+                let card = document.createElement('div');
+                card.className = "bg-white border rounded-xl p-5 shadow-sm space-y-3";
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start border-b pb-2">
+                        <div>
+                            <span class="text-xs font-extrabold text-emerald-900">Ref: ${letter.refNo}</span>
+                            <h4 class="text-sm font-bold">${letter.type} - <span class="text-xs font-normal">${letter.requesterName}</span></h4>
+                        </div>
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-full ${getStatusBadgeClass(letter.status)}">
+                            ${letter.status}
+                        </span>
+                    </div>
+
+                    <div class="text-xs text-gray-600">
+                        <p><strong>Current Office:</strong> ${letter.currentOffice}</p>
+                        ${letter.dispatchedTo ? `<p class="text-emerald-800 font-bold"><strong>Dispatched To Body:</strong> ${letter.dispatchedTo}</p>` : ''}
+                    </div>
+
+                    <!-- Progress Timeline Bar -->
+                    <div class="bg-gray-100 p-3 rounded-lg text-xs space-y-1">
+                        <p class="font-bold text-gray-500 text-[10px] uppercase">Audit Timeline:</p>
+                        ${letter.history.map(h => `<div class="text-gray-700">⏱️ <span class="text-gray-400">${h.time}:</span>${h.note}</div>`).join('')}
+                    </div>
+
+                    ${letter.status === 'DISPATCHED_READY' ? `
+                        <button onclick="triggerPrint(${letter.id})" class="w-full bg-yellow-500 hover:bg-yellow-600 text-emerald-950 font-black py-2 rounded-lg text-xs shadow">
+                            📥 Download / Print Official Approved Letter (with Seals)
+                        </button>
+                    ` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- 10. PRINTING ENGINE ---
+        function triggerPrint(id) {
+            let letter = letters.find(l => l.id === id);
+            if (!letter) return;
+
+            document.getElementById('printRefNo').innerText = letter.refNo;
+            document.getElementById('printDate').innerText = letter.date;
+            
+            document.getElementById('printBody').innerHTML = `
+                <p><strong>To:</strong> ${letter.dispatchedTo || letter.targetVP}</p>
+                <p><strong>From:</strong> ${letter.requesterName} (${letter.department}, ${letter.college})</p>
+                <p><strong>Subject:</strong> Official Endorsement for ${letter.type}</p>
+                <br>
+                <p>${letter.body}</p>
+                ${letter.materialDetails ? `<p class="mt-2 bg-gray-50 p-2 border"><strong>Asset Requisition:</strong> ${letter.materialDetails.item} (Tag:${letter.materialDetails.tag})</p>` : ''}
+                <br>
+                <p>This document has undergone hierarchical verification and holds full endorsement from the university authorities.</p>
+            `;
+
+            document.getElementById('printDeptHeadName').innerText = letter.signatures.deptHead || "Signed / Stamped";
+            document.getElementById('printDeanName').innerText = letter.signatures.dean || "Signed / Stamped";
+            document.getElementById('printVPName').innerText = letter.signatures.vp || "Final VP Endorsed";
+
+            document.getElementById('printableLetter').classList.remove('hidden');
+            window.print();
+            document.getElementById('printableLetter').classList.add('hidden');
+        }
+
+        // --- 11. ADMIN MANAGEMENT MODAL & ACTIONS ---
+        function renderAdminTable() {
+            const tbody = document.getElementById('adminOfficialsTable');
+            tbody.innerHTML = '';
+
+            assignedOfficials.forEach(o => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-3 font-bold">${o.name}</td>
+                        <td class="p-3"><span class="bg-blue-100 text-blue-900 px-2 py-0.5 rounded text-[10px] font-bold">${o.role}</span></td>
+                        <td class="p-3">${o.college} (${o.department})</td>
+                        <td class="p-3"><span class="text-green-600 font-bold">Active</span></td>
+                        <td class="p-3 text-right">
+                            <button onclick="revokeOfficial(${o.id})" class="text-red-600 hover:text-red-800 font-bold text-[10px]">Revoke</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openAssignModal() {
+            populateColleges();
+            document.getElementById('assignModal').classList.remove('hidden');
+        }
+        function closeAssignModal() {
+            document.getElementById('assignModal').classList.add('hidden');
+        }
+
+        function saveOfficialAssignment(e) {
+            e.preventDefault();
+            const name = document.getElementById('adminOfficialName').value;
+            const role = document.getElementById('adminRoleSelect').value;
+            const college = document.getElementById('adminCollegeSelect').value;
+            const dept = document.getElementById('adminDeptSelect').value;
+
+            assignedOfficials.push({
+                id: Date.now(),
+                name: name,
+                role: role,
+                college: college,
+                department: dept,
+                active: true
+            });
+
+            localStorage.setItem('obu_assigned_officials', JSON.stringify(assignedOfficials));
+            renderAdminTable();
+            closeAssignModal();
+            alert(`Authorized ${name} as ${role} for ${college}`);
+        }
+
+        function revokeOfficial(id) {
+            assignedOfficials = assignedOfficials.filter(o => o.id !== id);
+            localStorage.setItem('obu_assigned_officials', JSON.stringify(assignedOfficials));
+            renderAdminTable();
+        }
+
+        // --- 12. PERSONA SWITCHER ---
+        function switchRoleModal() {
+            const container = document.getElementById('personaOptionsContainer');
+            container.innerHTML = '';
+
+            const rolesList = [
+                { role: "Requester / Faculty", name: "Dr. Abebe Tadesse" },
+                { role: "Department Head", name: "Dr. Mohammed Kassa" },
+                { role: "College Dean", name: "Dr. Chala Gemechu" },
+                { role: "Academic Vice President", name: "Prof. Bekele Gutema" },
+                { role: "System Administrator / Developer", name: "Mr. Teklu Nega (MSc)" }
+            ];
+
+            rolesList.forEach(r => {
+                container.innerHTML += `
+                    <button onclick="selectPersona('${r.role}', '${r.name}')" class="w-full text-left p-3 border rounded-lg hover:bg-emerald-50 transition flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-xs text-gray-800">${r.role}</p>
+                            <p class="text-[10px] text-gray-500">${r.name}</p>
+                        </div>
+                        <span class="text-xs text-emerald-800 font-bold">Select ➔</span>
+                    </button>
+                `;
+            });
+
+            document.getElementById('roleModal').classList.remove('hidden');
+        }
+
+        function closeRoleModal() {
+            document.getElementById('roleModal').classList.add('hidden');
+        }
+
+        function selectPersona(role, name) {
+            currentUser.role = role;
+            currentUser.officialName = name;
+            document.getElementById('currentUserRoleBadge').innerText = `${role}: ${name}`;
+            closeRoleModal();
+            renderLettersQueue();
+        }
+
+        // --- 13. UTILITIES & STORAGE ---
+        function setTab(tab) {
+            document.getElementById('panelQueue').classList.add('hidden');
+            document.getElementById('panelTracker').classList.add('hidden');
+            document.getElementById('panelAdmin').classList.add('hidden');
+
+            document.getElementById('tabQueue').className = "px-4 py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-700";
+            document.getElementById('tabTracker').className = "px-4 py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-700";
+            document.getElementById('tabAdmin').className = "px-4 py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-700";
+
+            if (tab === 'queue') {
+                document.getElementById('panelQueue').classList.remove('hidden');
+                document.getElementById('tabQueue').className = "px-4 py-2 rounded-lg text-xs font-bold bg-emerald-800 text-white shadow";
+            } else if (tab === 'tracker') {
+                document.getElementById('panelTracker').classList.remove('hidden');
+                document.getElementById('tabTracker').className = "px-4 py-2 rounded-lg text-xs font-bold bg-emerald-800 text-white shadow";
+            } else if (tab === 'admin') {
+                document.getElementById('panelAdmin').classList.remove('hidden');
+                document.getElementById('tabAdmin').className = "px-4 py-2 rounded-lg text-xs font-bold bg-yellow-500 text-emerald-950 font-black shadow";
+            }
+        }
+
+        function getStatusBadgeClass(status) {
+            if (status.includes('PENDING')) return 'bg-yellow-100 text-yellow-900 border border-yellow-300';
+            if (status.includes('DISPATCHED')) return 'bg-green-100 text-green-900 border border-green-300';
+            if (status.includes('REJECTED')) return 'bg-red-100 text-red-900 border border-red-300';
+            return 'bg-gray-100 text-gray-800';
+        }
+
+        function saveStorage() {
+            localStorage.setItem('obu_letters_db', JSON.stringify(letters));
+        }
+    </script>
+</body>
+</html>
